@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "SafeZone India",
+    "slug": "safezone-india",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "safezone",
+    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "in.safezone.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "SafeZone uses your location to show safety risk data for the area you are actually in, and to send your position to the nearest police station if you raise an SOS.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "During an active SOS, SafeZone shares your live location with the nearest police station even when the app is in the background, so responders can find you if you cannot keep the app open.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "in.safezone.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#4F46E5"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "imageWidth": 200,
+          "backgroundColor": "#4F46E5"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SafeZone uses your location to show risk data for where you are and to route an SOS to the nearest police station.",
+          "locationAlwaysAndWhenInUsePermission": "During an active SOS, SafeZone keeps sharing your live location so responders can reach you even if the app is backgrounded.",
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
+      "expo-font",
+      "expo-splash-screen",
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "extra": {
+      "apiUrl": "http://localhost:8080",
+      "aiUrl": "http://localhost:8090",
+      "googleIosClientId": "",
+      "googleAndroidClientId": "",
+      "googleWebClientId": ""
+    }
+  }
+}
