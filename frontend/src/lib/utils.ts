@@ -1,49 +1,54 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+/**
+ * Risk logic comes from @safezone/shared, never from a copy kept here.
+ *
+ * This file used to declare its own RISK_BANDS plus its own riskColor,
+ * riskLabel and riskLevelFromScore. They had already drifted: riskColor held a
+ * second hard-coded colour map rather than reading the bands, so changing a band
+ * colour in one place would have left the map and the legend disagreeing — and
+ * the mobile app, which reads the shared package, disagreeing with both.
+ *
+ * Re-exported rather than removed so the existing `@/lib/utils` imports across
+ * the app keep working; the definitions now have exactly one home.
+ */
+export {
+  RISK_BANDS,
+  RISK_DISCLAIMER,
+  HELPLINES,
+  PRIMARY_HELPLINE,
+  GENERAL_HELPLINES,
+  TIME_BANDS,
+  TIME_MODEL_DISCLAIMER,
+  RISK_PROFILES,
+  GENERAL_PROFILE_DISCLAIMER,
+  WOMEN_PROFILE_DISCLAIMER,
+  bandForDate,
+  profileForGender,
+  profiledRisk,
+  riskBand,
+  riskColor,
+  riskLabel,
+  riskLevelFromScore,
+  timeAdjustedRisk,
+  timeBandDef,
+} from '@safezone/shared';
+
+export type { RiskBand, TimeBand, RiskProfile } from '@safezone/shared';
+
 /** Merge Tailwind classes with clsx. */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Risk bands, ordered most severe first. Shared by the map legend, popups and
- * any chart that needs consistent colours and thresholds.
+ * Tailwind background class per risk level.
+ *
+ * Stays local: these are utility-class names, not colours, so they belong to the
+ * web client rather than the shared package. The hex values they correspond to
+ * are still defined once, in RISK_BANDS.
  */
-export const RISK_BANDS = [
-  { level: 'critical', label: 'Critical', min: 80, max: 100, color: '#EF4444' },
-  { level: 'high', label: 'High', min: 60, max: 79, color: '#F97316' },
-  { level: 'moderate', label: 'Moderate', min: 40, max: 59, color: '#F59E0B' },
-  { level: 'low', label: 'Low', min: 20, max: 39, color: '#10B981' },
-  { level: 'very_low', label: 'Very low', min: 0, max: 19, color: '#06B6D4' },
-] as const;
-
-export type RiskBand = (typeof RISK_BANDS)[number];
-
-/** Human-readable label for a risk level (e.g. very_low -> "Very low"). */
-export function riskLabel(level?: string): string {
-  return RISK_BANDS.find((b) => b.level === level)?.label ?? 'Unscored';
-}
-
-/** Derive a risk level from a numeric score, mirroring the backend thresholds. */
-export function riskLevelFromScore(score?: number | null): string {
-  if (score == null) return 'unscored';
-  return RISK_BANDS.find((b) => score >= b.min)?.level ?? 'very_low';
-}
-
-/** Format a risk score to a color. */
-export function riskColor(level: string): string {
-  const colors: Record<string, string> = {
-    critical: '#EF4444',
-    high: '#F97316',
-    moderate: '#F59E0B',
-    low: '#10B981',
-    very_low: '#06B6D4',
-  };
-  return colors[level] || '#6B7280';
-}
-
-/** Format a risk score to a background class. */
 export function riskBgClass(level: string): string {
   const classes: Record<string, string> = {
     critical: 'bg-red-500',
