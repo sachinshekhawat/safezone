@@ -1,5 +1,13 @@
-import { useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  AppState,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
@@ -37,8 +45,49 @@ import ZoneMap, { type MapZone } from '../../src/components/zone-map';
 import useLocationStore from '../../src/store/location-store';
 import { SPACING } from '../../src/theme';
 
-/** Bands offered in the filter, in the order a user is likely to want them. */
-const FILTER_BANDS: TimeBand[] = ['morning', 'evening', 'night', 'late_night'];
+/**
+ * Bands offered in the filter, in clock order.
+ *
+ * All six, not a curated four. An earlier version listed only morning, evening,
+ * night and late_night, which meant that between 4–6am and 12–4pm the band the
+ * app had actually selected had no chip at all — nothing looked selected and the
+ * numbers on screen appeared to come from nowhere.
+ */
+const FILTER_BANDS: TimeBand[] = [
+  'dawn',
+  'morning',
+  'afternoon',
+  'evening',
+  'night',
+  'late_night',
+];
+
+/**
+ * The band it is right now, kept current.
+ *
+ * Recomputed when the app returns to the foreground and once a minute while it
+ * is open, because a phone left on a table through 7:59pm would otherwise still
+ * be showing evening figures well into the night.
+ */
+function useCurrentBand(): TimeBand {
+  const [now, setNow] = useState<TimeBand>(() => bandForDate());
+
+  useEffect(() => {
+    const tick = () => setNow(bandForDate());
+
+    const timer = setInterval(tick, 60_000);
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') tick();
+    });
+
+    return () => {
+      clearInterval(timer);
+      sub.remove();
+    };
+  }, []);
+
+  return now;
+}
 
 function baseLevel(zone: ZoneWithRisk): RiskLevel | 'unscored' {
   return (zone.risk_level as RiskLevel) ?? riskLevelFromScore(zone.risk_score);
@@ -176,11 +225,17 @@ export default function ZonesScreen() {
   const theme = useTheme();
 
   const [view, setView] = useState<'map' | 'list'>('map');
-  // Default to the hour it actually is, so the first screen is relevant without
-  // the user touching a filter.
-  const [band, setBand] = useState<TimeBand>(() => bandForDate());
+
+  const nowBand = useCurrentBand();
+  // Null means "follow the clock". Set only when the user picks a band, so the
+  // default view is always the current hour but an explicit choice is never
+  // yanked away underneath them a minute later.
+  const [pickedBand, setPickedBand] = useState<TimeBand | null>(null);
+  const band = pickedBand ?? nowBand;
+
   const [activeBand, setActiveBand] = useState<RiskLevel | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const timeScrollRef = useRef<ScrollView>(null);
 
   const {
     selectedCity,
@@ -284,28 +339,42 @@ export default function ZonesScreen() {
         </Text>
       </View>
 
-      {/* Time filter. Horizontal scroll rather than a segmented control so the
-          band labels stay readable instead of truncating to "Late…". */}
+      {/* Time filter.
+          `flexGrow: 0` on the ScrollView and `alignItems: 'center'` on its
+          content container are both load-bearing: inside a flex column a
+          horizontal ScrollView otherwise expands to fill the remaining height
+          and stretches every chip into a full-height pill. */}
       <ScrollView
+        ref={timeScrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.timeScroll}
         contentContainerStyle={styles.timeRow}
       >
-        {FILTER_BANDS.map((b) => {
+        {FILTER_BANDS.map((b, i) => {
           const def = timeBandDef(b);
           const active = band === b;
+          const isNow = nowBand === b;
           return (
             <Pressable
               key={b}
-              onPress={() => setBand(b)}
+              onPress={() => setPickedBand(b)}
+              onLayout={(e) => {
+                // Scroll the current hour into view on first paint, so the
+                // selected chip is never off-screen to the right.
+                if (isNow && pickedBand === null && i > 2) {
+                  const x = e.nativeEvent.layout.x;
+                  timeScrollRef.current?.scrollTo({ x: Math.max(0, x - 80), animated: false });
+                }
+              }}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
-              accessibilityLabel={`Show risk for ${def.label}, ${def.range}`}
+              accessibilityLabel={`Show risk for ${def.label}, ${def.range}${isNow ? ', current time' : ''}`}
               style={[
                 styles.timeChip,
                 {
                   backgroundColor: active ? theme.colors.primary : theme.colors.surface,
-                  borderColor: active ? theme.colors.primary : theme.colors.outline,
+                  borderColor: active ? theme.colors.primary : theme.colors.outlineVariant,
                 },
               ]}
             >
@@ -323,10 +392,49 @@ export default function ZonesScreen() {
               >
                 {def.label}
               </Text>
+              {/* Marks which chip is the live clock, so a manual pick is
+                  distinguishable from "now" at a glance. */}
+              {isNow && (
+                <View
+                  style={[
+                    styles.nowDot,
+                    {
+                      backgroundColor: active ? theme.colors.onPrimary : theme.colors.primary,
+                    },
+                  ]}
+                />
+              )}
             </Pressable>
           );
         })}
       </ScrollView>
+
+      {/* Which hour is on screen, and a way back to the live one. Without this,
+          a user who tapped "Late night" earlier has no cue that the figures are
+          no longer about right now. */}
+      {pickedBand && pickedBand !== nowBand ? (
+        <Pressable
+          onPress={() => setPickedBand(null)}
+          accessibilityRole="button"
+          accessibilityLabel={`Showing ${bandDef.label}. Tap to go back to the current time.`}
+          style={[styles.nowPill, { backgroundColor: theme.colors.primaryContainer }]}
+        >
+          <MaterialIcon name="clock-outline" size={13} color={theme.colors.onPrimaryContainer} />
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+          >
+            {bandDef.label} · back to now
+          </Text>
+        </Pressable>
+      ) : (
+        <View style={[styles.nowPill, { backgroundColor: theme.colors.surfaceVariant }]}>
+          <View style={[styles.liveDot, { backgroundColor: theme.colors.primary }]} />
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: '700' }}>
+            Now · {bandDef.label} · {bandDef.range}
+          </Text>
+        </View>
+      )}
 
       {/* What the selected hour changed, stated once rather than per row. */}
       {bandDef.exposure > 0 && raisedCount > 0 && (
@@ -334,7 +442,7 @@ export default function ZonesScreen() {
           <MaterialIcon name="information-outline" size={13} color={theme.colors.primary} />
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, flex: 1 }}>
             {raisedCount} of {adjusted.length} zones score higher at{' '}
-            {bandDef.label.toLowerCase()} ({bandDef.range}).
+            {bandDef.label.toLowerCase()}.
           </Text>
         </View>
       )}
@@ -438,19 +546,31 @@ const styles = StyleSheet.create({
   brand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   brandText: { fontWeight: '800' },
 
-  header: { paddingHorizontal: SPACING.md, paddingTop: SPACING.sm + 4, paddingBottom: SPACING.sm },
+  header: { paddingHorizontal: SPACING.md, paddingTop: SPACING.sm + 2, paddingBottom: SPACING.sm },
   cityName: { fontWeight: '800' },
 
-  timeRow: { paddingHorizontal: SPACING.md, gap: SPACING.sm, paddingBottom: SPACING.sm },
+  // flexGrow 0 stops the horizontal scroller from claiming leftover column
+  // height, which is what stretched the chips into full-height pills.
+  timeScroll: { flexGrow: 0, flexShrink: 0 },
+  timeRow: {
+    paddingHorizontal: SPACING.md,
+    gap: SPACING.sm,
+    paddingBottom: SPACING.sm,
+    alignItems: 'center',
+  },
   timeChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 13,
-    paddingVertical: 9,
-    borderRadius: 999,
+    gap: 6,
+    paddingHorizontal: 14,
+    // Fixed height rather than vertical padding, so every chip is identical
+    // regardless of icon metrics, and the row cannot grow.
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1.5,
   },
+  nowDot: { width: 6, height: 6, borderRadius: 3, marginLeft: 1 },
+  liveDot: { width: 7, height: 7, borderRadius: 4 },
 
   hourNote: {
     flexDirection: 'row',
@@ -458,6 +578,17 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: SPACING.md,
     paddingBottom: SPACING.sm,
+  },
+  nowPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
   },
 
   switchWrap: { paddingHorizontal: SPACING.md, paddingBottom: SPACING.sm },

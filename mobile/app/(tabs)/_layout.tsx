@@ -37,16 +37,6 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="sos"
-        options={{
-          title: 'SOS',
-          tabBarIcon: ({ size }) => (
-            <MaterialIcon name="alert-octagon" color={theme.colors.error} size={size + 4} />
-          ),
-          tabBarLabelStyle: { fontSize: 11, fontWeight: '700', color: theme.colors.error },
-        }}
-      />
-      <Tabs.Screen
         name="advisor"
         options={{
           title: 'Advisor',
@@ -64,6 +54,17 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="sos"
+        options={{
+          title: 'SOS',
+          tabBarIcon: ({ size }) => (
+            <MaterialIcon name="alert-octagon" color={theme.colors.error} size={size + 4} />
+          ),
+          tabBarLabelStyle: { fontSize: 11, fontWeight: '700', color: theme.colors.error },
+        }}
+      />
+
     </Tabs>
   );
 }
