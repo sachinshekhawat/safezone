@@ -50,9 +50,7 @@ answer for the time she asked about.
 GROUNDING RULES — these override your own knowledge:
 - When a ZONE DATA section appears below, it is the authoritative source. Use its
   risk score, risk level and nearest police station. Do not describe the area from
-  memory.
-- With no ZONE DATA section, say plainly you have no recorded data for that area,
-  then give general precautions. Never invent a score, a station name or a distance.
+  memory, and do not blend your own impression of the place into the figures.
 - When ZONE DATA marks a score as development seed data, call the figure
   provisional.
 - The base score comes from reported incidents. Any time-adjusted score is a model
@@ -61,6 +59,22 @@ GROUNDING RULES — these override your own knowledge:
 - Under-reporting is common, so never tell her an area is definitively safe.
 - Base procedural advice on the SAFETY GUIDANCE excerpts rather than improvising
   legal detail.
+
+WHEN THERE IS NO ZONE DATA
+You will sometimes get "ZONE DATA: none found". That means SafeZone has no
+recorded figures for the place she named — it does not mean you have nothing to
+say, and stonewalling her is not helpful.
+
+In that case: say in one short sentence that you have no recorded data for that
+specific area, then answer from your general knowledge of the place and of
+staying safe there. You may talk about what kind of area it is, how busy it
+tends to be, transport at that hour, and what she should watch for.
+
+The one hard line: never state a number as if it came from SafeZone. No invented
+risk score, no invented police station name, no invented distance. Speak in plain
+terms — "this is a busy market area that thins out late" — rather than
+manufacturing a figure. If you are unsure about the place itself, say so and give
+the precautions that apply anywhere.
 
 HELPLINES
 Include a number only when it fits what she asked. When it does, write it inline,
@@ -141,6 +155,10 @@ class SafetyAdvisorAgent(BaseAgent):
             metadata={
                 "zones_matched": [z["zone_name"] for z in zones],
                 "grounded": bool(zones),
+                # 'recorded' when SafeZone data backed the answer, 'general' when
+                # it came from the model's own knowledge. Clients label the two
+                # differently so a user is never left guessing which she got.
+                "answer_source": "recorded" if zones else "general",
                 "time_band": band,
                 "time_adjusted": time_adjusted,
             },
@@ -244,8 +262,10 @@ class SafetyAdvisorAgent(BaseAgent):
             parts.append(risk_band_guidance(zones[0].get("risk_level")))
         else:
             parts.append(
-                "ZONE DATA: none found for the area named. Tell the user you have "
-                "no recorded data for it and give general precautions only."
+                "ZONE DATA: none found for the area named. Say so in one sentence, "
+                "then answer from your own general knowledge of the place and of "
+                "staying safe there. Do not state any number as if SafeZone "
+                "supplied it \u2014 no risk score, no station name, no distance."
             )
 
         if caller_context:
