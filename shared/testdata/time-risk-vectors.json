@@ -1,0 +1,117 @@
+{
+  "_comment": [
+    "Golden vectors for the time-of-day risk model.",
+    "Asserted by BOTH shared/src/time-risk.test.ts and",
+    "ai-service/tests/test_time_risk.py. The TypeScript and Python",
+    "implementations are separate copies by necessity (two runtimes), so these",
+    "vectors are the mechanism that stops them drifting apart: change one side's",
+    "arithmetic and the other side's test suite fails.",
+    "Regenerate deliberately, never to make a failing test pass."
+  ],
+  "bandForHour": {
+    "0": "late_night",
+    "3": "late_night",
+    "4": "dawn",
+    "5": "dawn",
+    "6": "morning",
+    "11": "morning",
+    "12": "afternoon",
+    "15": "afternoon",
+    "16": "evening",
+    "19": "evening",
+    "20": "night",
+    "23": "night"
+  },
+  "cases": [
+    {
+      "name": "daylight never adjusts, even with terrible infrastructure",
+      "input": { "riskScore": 50, "infrastructureScore": 10, "zoneType": "commercial" },
+      "band": "morning",
+      "expect": { "adjustedScore": 50, "delta": 0, "level": "moderate", "factorTypes": [] }
+    },
+    {
+      "name": "afternoon also flat",
+      "input": { "riskScore": 72.5, "infrastructureScore": 20, "zoneType": "rural" },
+      "band": "afternoon",
+      "expect": { "adjustedScore": 72.5, "delta": 0, "level": "high", "factorTypes": [] }
+    },
+    {
+      "name": "late night, poor infrastructure, commercial — worst case uplift",
+      "input": { "riskScore": 50, "infrastructureScore": 10, "zoneType": "commercial" },
+      "band": "late_night",
+      "expect": {
+        "adjustedScore": 76.2,
+        "delta": 26,
+        "level": "high",
+        "factorTypes": ["poor_lighting", "isolation", "public_transport"]
+      }
+    },
+    {
+      "name": "late night but excellent infrastructure — lighting drops out",
+      "input": { "riskScore": 30, "infrastructureScore": 100, "zoneType": "residential" },
+      "band": "late_night",
+      "expect": {
+        "adjustedScore": 36,
+        "delta": 6,
+        "level": "low",
+        "factorTypes": ["public_transport", "isolation"]
+      }
+    },
+    {
+      "name": "night band, mid infrastructure, residential",
+      "input": { "riskScore": 40, "infrastructureScore": 50, "zoneType": "residential" },
+      "band": "night",
+      "expect": {
+        "adjustedScore": 51.3,
+        "delta": 11,
+        "level": "moderate",
+        "factorTypes": ["poor_lighting", "public_transport", "isolation"]
+      }
+    },
+    {
+      "name": "evening is a partial uplift with no transport factor",
+      "input": { "riskScore": 40, "infrastructureScore": 50, "zoneType": "residential" },
+      "band": "evening",
+      "expect": {
+        "adjustedScore": 43.9,
+        "delta": 4,
+        "level": "moderate",
+        "factorTypes": ["poor_lighting", "isolation"]
+      }
+    },
+    {
+      "name": "dawn sits between evening and night",
+      "input": { "riskScore": 40, "infrastructureScore": 50, "zoneType": "residential" },
+      "band": "dawn",
+      "expect": {
+        "adjustedScore": 46.1,
+        "delta": 6,
+        "level": "moderate",
+        "factorTypes": ["poor_lighting", "isolation"]
+      }
+    },
+    {
+      "name": "clamps at 100 rather than overflowing the band scale",
+      "input": { "riskScore": 97, "infrastructureScore": 0, "zoneType": "commercial" },
+      "band": "late_night",
+      "expect": { "adjustedScore": 100, "delta": 3, "level": "critical", "factorTypes": ["poor_lighting", "isolation", "public_transport"] }
+    },
+    {
+      "name": "unscored zone stays unscored — no invented number",
+      "input": { "riskScore": null, "infrastructureScore": 20, "zoneType": "commercial" },
+      "band": "late_night",
+      "expect": { "adjustedScore": null, "delta": 0, "level": "unscored", "factorTypes": [] }
+    },
+    {
+      "name": "missing infrastructure assumes mid-range, not zero",
+      "input": { "riskScore": 40, "zoneType": "mixed" },
+      "band": "late_night",
+      "expect": {
+        "adjustedScore": 56,
+        "delta": 16,
+        "level": "moderate",
+        "factorTypes": ["poor_lighting", "public_transport", "isolation"]
+      }
+    }
+  ]
+}

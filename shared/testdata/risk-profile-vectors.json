@@ -1,0 +1,103 @@
+{
+  "_comment": [
+    "Golden vectors for the audience risk profile model.",
+    "Asserted by BOTH shared/src/risk-profile.test.ts and",
+    "ai-service/tests/test_risk_profile.py. Same purpose as the time-risk",
+    "vectors: the TypeScript and Python copies cannot drift without a test",
+    "going red."
+  ],
+  "profileForGender": {
+    "female": "women",
+    "male": "general",
+    "other": "general",
+    "prefer_not_to_say": "general",
+    "": "general"
+  },
+  "cases": [
+    {
+      "name": "commercial zone emphasises gendered risk for women",
+      "input": { "riskScore": 50, "zoneType": "commercial" },
+      "profile": "women",
+      "expect": { "score": 52.1, "delta": 2, "level": "moderate", "dataBacked": true }
+    },
+    {
+      "name": "same zone, general profile discounts the gendered share",
+      "input": { "riskScore": 50, "zoneType": "commercial" },
+      "profile": "general",
+      "expect": { "score": 33.9, "delta": -16, "level": "low", "dataBacked": false }
+    },
+    {
+      "name": "women's help desk lowers the women score",
+      "input": {
+        "riskScore": 50,
+        "zoneType": "mixed",
+        "nearestStationHasWomenDesk": true,
+        "femaleLiteracyRate": 80
+      },
+      "profile": "women",
+      "expect": { "score": 46, "delta": -4, "level": "moderate", "dataBacked": true }
+    },
+    {
+      "name": "mixed zone general profile",
+      "input": { "riskScore": 50, "zoneType": "mixed" },
+      "profile": "general",
+      "expect": { "score": 36, "delta": -14, "level": "low", "dataBacked": false }
+    },
+    {
+      "name": "low female literacy nudges the women score up for under-reporting",
+      "input": { "riskScore": 60, "zoneType": "residential", "femaleLiteracyRate": 55 },
+      "profile": "women",
+      "expect": { "score": 60.4, "delta": 0, "level": "high", "dataBacked": true }
+    },
+    {
+      "name": "residential general profile",
+      "input": { "riskScore": 60, "zoneType": "residential", "femaleLiteracyRate": 55 },
+      "profile": "general",
+      "expect": { "score": 44, "delta": -16, "level": "moderate", "dataBacked": false }
+    },
+    {
+      "name": "backend-supplied general score wins and is marked data-backed",
+      "input": {
+        "riskScore": 50,
+        "zoneType": "commercial",
+        "profileScores": { "general": 30, "women": 70 }
+      },
+      "profile": "general",
+      "expect": { "score": 30, "delta": -20, "level": "low", "dataBacked": true }
+    },
+    {
+      "name": "backend-supplied women score wins",
+      "input": {
+        "riskScore": 50,
+        "zoneType": "commercial",
+        "profileScores": { "general": 30, "women": 70 }
+      },
+      "profile": "women",
+      "expect": { "score": 70, "delta": 20, "level": "high", "dataBacked": true }
+    },
+    {
+      "name": "clamps at the top of the scale",
+      "input": { "riskScore": 100, "zoneType": "commercial" },
+      "profile": "women",
+      "expect": { "score": 100, "delta": 0, "level": "critical", "dataBacked": true }
+    },
+    {
+      "name": "clamps at the bottom of the scale",
+      "input": { "riskScore": 0, "zoneType": "mixed", "nearestStationHasWomenDesk": true },
+      "profile": "women",
+      "expect": { "score": 0, "delta": 0, "level": "very_low", "dataBacked": true }
+    },
+    {
+      "name": "unscored zone gains no number for either profile",
+      "input": { "riskScore": null, "zoneType": "commercial" },
+      "profile": "women",
+      "expect": { "score": null, "delta": 0, "level": "unscored", "dataBacked": false }
+    },
+    {
+      "name": "unscored zone, general profile",
+      "input": { "riskScore": null, "zoneType": "commercial" },
+      "profile": "general",
+      "expect": { "score": null, "delta": 0, "level": "unscored", "dataBacked": false }
+    }
+  ]
+}
