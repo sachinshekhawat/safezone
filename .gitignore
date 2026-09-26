@@ -1,0 +1,91 @@
+# =========================
+# Go
+# =========================
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+bin/
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+*.ipynb_checkpoints/
+ai-service/chroma_db/
+
+# =========================
+# Node / Next.js
+# =========================
+node_modules/
+.next/
+out/
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# =========================
+# Environment & Secrets
+# =========================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# =========================
+# Database
+# =========================
+*.db
+*.sqlite3
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# =========================
+# Docker
+# =========================
+docker-compose.override.yml
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# ML Models (large files)
+# =========================
+ai-service/app/models/artifacts/*.pkl
+ai-service/app/models/artifacts/*.joblib
+ai-service/app/models/artifacts/*.pt
+ai-service/app/models/artifacts/*.meta.json
+
+# Local test virtualenvs
+.venv*/
+ai-service/.venv*/
