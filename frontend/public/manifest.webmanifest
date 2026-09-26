@@ -1,0 +1,47 @@
+{
+  "name": "SafeZone India — Safety Risk Prediction",
+  "short_name": "SafeZone",
+  "description": "Data-driven safety risk analysis for Indian cities, with one-tap emergency SOS.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F9FAFB",
+  "theme_color": "#4F46E5",
+  "lang": "en-IN",
+  "categories": ["health", "navigation", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Emergency SOS",
+      "short_name": "SOS",
+      "description": "Alert the nearest police station with your live location",
+      "url": "/sos"
+    },
+    {
+      "name": "Safety Advisor",
+      "short_name": "Advisor",
+      "description": "Ask whether an area is safe",
+      "url": "/chat"
+    }
+  ]
+}

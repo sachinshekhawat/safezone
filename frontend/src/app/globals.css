@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #4F46E5;
+  --primary-dark: #4338CA;
+  --safe: #10B981;
+  --moderate: #F59E0B;
+  --danger: #EF4444;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  /* Stop iOS inflating text in landscape. */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Remove the grey tap flash on iOS while keeping focus rings for keyboards. */
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Respect notches and home indicators on iOS/Android. */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* Clears the fixed bottom tab bar (56px) plus the home indicator. */
+  .pb-nav {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+  /*
+   * For sticky footers (e.g. the chat composer). `sticky bottom-0` would sit
+   * behind the fixed mobile tab bar, so offset by the bar's height on phones
+   * and drop back to 0 from `md` up where the bar is hidden.
+   */
+  .sticky-above-nav {
+    position: sticky;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 768px) {
+    .sticky-above-nav {
+      bottom: 0;
+    }
+  }
+}
+
+/* Leaflet map fixes for Next.js */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  /* Let vertical page scroll through the map, but keep pinch-zoom. */
+  touch-action: pan-y pinch-zoom;
+}
+
+/* Leaflet popups: match the app's rounded style and keep them readable on phones */
+.leaflet-popup-content-wrapper {
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15);
+}
+.leaflet-popup-content {
+  margin: 0.625rem 0.75rem;
+  font-family: inherit;
+}
+/* Bigger close affordance for touch */
+.leaflet-container a.leaflet-popup-close-button {
+  width: 28px;
+  height: 28px;
+  font-size: 20px;
+  padding: 4px 4px 0 0;
+}
+.leaflet-tooltip {
+  font-family: inherit;
+  font-size: 0.75rem;
+  border-radius: 0.375rem;
+}
+
+/* Keep Leaflet's zoom buttons comfortably tappable */
+.leaflet-touch .leaflet-bar a {
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+}
+
+/* SOS Button pulse animation */
+@keyframes sos-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+}
+
+.sos-pulse {
+  animation: sos-pulse 2s infinite;
+}
+
+/* Honour users who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .sos-pulse {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Chat scrollbar */
+.chat-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
