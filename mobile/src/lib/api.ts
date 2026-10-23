@@ -38,8 +38,9 @@ function resolveHost(configured: string): string {
 
 const extra = (Constants.expoConfig?.extra ?? {}) as { apiUrl?: string; aiUrl?: string };
 
-export const API_URL = resolveHost(extra.apiUrl ?? 'http://localhost:8080');
-export const AI_URL = resolveHost(extra.aiUrl ?? 'http://localhost:8090');
+// Hardcoded for testing on physical device over LAN
+export const API_URL = 'http://192.168.1.5:8080';
+export const AI_URL = 'http://192.168.1.5:8090';
 
 export const api = new SafeZoneApi({
   baseUrl: API_URL,

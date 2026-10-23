@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: safezone_dev_password
       POSTGRES_DB: safezone_india
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -88,8 +88,8 @@ services:
   # =========================
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: safezone-frontend
     ports:
       - "3000:3000"

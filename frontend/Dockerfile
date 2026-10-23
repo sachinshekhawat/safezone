@@ -3,12 +3,15 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Copy the shared package so the file:../shared dependency resolves
+COPY shared/ /shared/
+
 # Install dependencies (cached layer)
-COPY package.json package-lock.json* ./
+COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm ci || npm install
 
 # Copy source and build
-COPY . .
+COPY frontend/ .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

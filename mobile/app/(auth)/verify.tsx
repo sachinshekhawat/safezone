@@ -19,6 +19,13 @@ export default function VerifyScreen() {
   const [cooldown, setCooldown] = useState(pending?.retryAfterSecs ?? 60);
   const inputRef = useRef<any>(null);
 
+  // Auto-fill the code in development to speed up testing
+  useEffect(() => {
+    if (pending?.devCode) {
+      setCode(pending.devCode);
+    }
+  }, [pending?.devCode]);
+
   // Resend countdown. Showing the remaining seconds stops the user from
   // hammering a button that the server will reject anyway.
   useEffect(() => {

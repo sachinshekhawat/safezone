@@ -102,6 +102,7 @@ func (h *PhoneAuthHandler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 		        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '1 day')
 		 FROM phone_otps WHERE phone = $1`, phone).Scan(&lastRequested, &todayCount)
 	if err != nil {
+		log.Printf("ERROR fetching phone_otps: %v", err)
 		writeError(w, http.StatusInternalServerError, "Could not process request")
 		return
 	}
